@@ -1,16 +1,50 @@
 version: "3.8"
-
 services:
-  angular-app:
-    image: node:20-alpine
-    container_name: angular-dev
-    working_dir: /app
+  app_setup:
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
-      - ./:/app
+      - .:/app
+    working_dir: /app
+    env_file:
+      - .env
+    command: >
+      sh -c "
+        echo 'APP_NAME=${APP_NAME}';
+        echo 'MODELS_DATA=${MODELS_DATA}';
+        echo 'Listing scripts dir:' && ls -la /app/scripts;
+        if [ '${APP_NAME}' ] && [ '${MODELS_DATA}' ]; then
+          echo 'Fixing line endings with dos2unix...';
+          dos2unix /app/scripts/generate_angular_files.sh &&
+          chmod +x /app/scripts/generate_angular_files.sh &&
+          echo 'Generating Angular files for models: ${MODELS_DATA}' &&
+          /app/scripts/generate_angular_files.sh \"${APP_NAME}\" \"${MODELS_DATA}\";
+        else
+          echo 'No APP_NAME or MODELS_DATA provided. Skipping code generation.';
+        fi
+      "
+
+  angular-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
     ports:
       - "4200:4200"
-    command: >
-      sh -c "npm install --legacy-peer-deps &&
-             npx ng serve --host 0.0.0.0 --disable-host-check"
+    working_dir: /app
     environment:
       - NODE_ENV=development
+    command: >
+      sh -c "
+        echo 'Installing packages...' &&
+        npm install --legacy-peer-deps &&
+        echo 'Starting Angular development server...' &&
+        ng serve --host 0.0.0.0 --disable-host-check
+      "
+
+    env_file:
+      - .env
+    depends_on:
+      - app_setup
