@@ -38,7 +38,7 @@ done
 # Step 1: Clone the repository if not exists
 if [ ! -d "$PROJECT_DIR" ]; then
   echo "Cloning Angular project template..."
-  git clone https://github.com/ahmedhamila/Angular-Init-Automation.git
+  git clone https://github.com/NesrineBousrih/Angular-Init-Automation.git
 fi
 
 # Step 2: Navigate into project
